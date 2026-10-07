@@ -33,9 +33,21 @@ jobs:
           flutter create --platforms=windows --project-name=lufyacbt .
           flutter doctor -v
 
-      - name: 📦 Install Dependencies
+      - name: 🎨 Apply Custom Windows Application Icon
+        shell: pwsh
+        run: |
+          if (Test-Path "assets\icons\app_icon.ico") {
+            New-Item -ItemType Directory -Path "windows\runner\resources" -Force
+            Copy-Item "assets\icons\app_icon.ico" "windows\runner\resources\app_icon.ico" -Force
+            Write-Host "✅ Successfully replaced windows\runner\resources\app_icon.ico with custom CBT icon!"
+          } else {
+            Write-Warning "assets\icons\app_icon.ico not found!"
+          }
+
+      - name: 📦 Install Dependencies & Generate Icons
         run: |
           flutter pub get
+          dart run flutter_launcher_icons
 
       - name: 🔨 Build Flutter Windows Release
         run: |
