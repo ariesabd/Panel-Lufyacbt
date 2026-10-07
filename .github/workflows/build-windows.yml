@@ -44,17 +44,19 @@ jobs:
       - name: 🗜️ Archive Windows Release Bundle
         shell: pwsh
         run: |
-          # Locate the runner directory that contains the compiled .exe file
-          $exeFile = Get-ChildItem -Path "build\windows" -Recurse -Filter "*.exe" | Select-Object -First 1
-          if ($exeFile) {
-            $runnerDir = $exeFile.Directory.FullName
-            Write-Host "Found compiled executable at: $($exeFile.FullName)"
-            Write-Host "Target bundle directory: $runnerDir"
-            Get-ChildItem -Path $runnerDir
-            Compress-Archive -Path "$runnerDir\*" -DestinationPath "Panel-LufyaCBT-Windows-x64.zip" -Force
+          # Accurately locate the real Flutter Release directory containing flutter_windows.dll
+          $bundleDir = Get-ChildItem -Path "build\windows" -Recurse -Directory | Where-Object {
+            (Test-Path (Join-Path $_.FullName "flutter_windows.dll")) -or
+            (Test-Path (Join-Path $_.FullName "data"))
+          } | Select-Object -First 1
+
+          if ($bundleDir) {
+            Write-Host "Found TRUE Flutter Windows Release Bundle at: $($bundleDir.FullName)"
+            Get-ChildItem -Path $bundleDir.FullName
+            Compress-Archive -Path "$($bundleDir.FullName)\*" -DestinationPath "Panel-LufyaCBT-Windows-x64.zip" -Force
             Write-Host "Successfully packaged Panel-LufyaCBT-Windows-x64.zip"
           } else {
-            Write-Error "No .exe file found in build\windows directory!"
+            Write-Error "Flutter release bundle containing flutter_windows.dll not found!"
             exit 1
           }
 
