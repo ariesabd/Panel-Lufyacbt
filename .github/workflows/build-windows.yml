@@ -33,25 +33,67 @@ jobs:
           flutter create --platforms=windows --project-name=lufyacbt .
           flutter doctor -v
 
-      - name: 🎨 Apply Custom Windows Application Icon
+      - name: 📦 Install Dependencies
+        run: flutter pub get
+
+      - name: 🎨 Apply Custom App Icon (Override Flutter Default)
         shell: pwsh
         run: |
-          if (Test-Path "assets\icons\app_icon.ico") {
-            New-Item -ItemType Directory -Path "windows\runner\resources" -Force
-            Copy-Item "assets\icons\app_icon.ico" "windows\runner\resources\app_icon.ico" -Force
-            Write-Host "✅ Successfully replaced windows\runner\resources\app_icon.ico with custom CBT icon!"
+          # Step 1: Copy custom .ico ke windows/runner/resources (SETELAH flutter create)
+          $iconSrc = "assets\icons\app_icon.ico"
+          $iconDst = "windows\runner\resources\app_icon.ico"
+
+          if (Test-Path $iconSrc) {
+            New-Item -ItemType Directory -Path "windows\runner\resources" -Force | Out-Null
+            Copy-Item $iconSrc $iconDst -Force
+            Write-Host "✅ Custom icon copied to $iconDst"
           } else {
-            Write-Warning "assets\icons\app_icon.ico not found!"
+            Write-Error "❌ $iconSrc not found! Build will use Flutter default icon."
+            exit 1
           }
 
-      - name: 📦 Install Dependencies & Generate Icons
-        run: |
-          flutter pub get
+          # Step 2: Patch Runner.rc agar menunjuk ke app_icon.ico kustom
+          $rcFile = "windows\runner\Runner.rc"
+          if (Test-Path $rcFile) {
+            $rcContent = Get-Content $rcFile -Raw
+            # Ganti icon reference Flutter default dengan icon kustom kita
+            $rcPatched = $rcContent -replace 'IDI_APP_ICON\s+ICON\s+"[^"]*"', 'IDI_APP_ICON             ICON             "resources\app_icon.ico"'
+            if ($rcPatched -ne $rcContent) {
+              Set-Content $rcFile $rcPatched -Encoding UTF8
+              Write-Host "✅ Runner.rc patched: IDI_APP_ICON => resources\app_icon.ico"
+            } else {
+              Write-Warning "Runner.rc already has correct icon path or pattern not found."
+              Write-Host "--- Runner.rc content ---"
+              Get-Content $rcFile
+            }
+          } else {
+            Write-Warning "Runner.rc not found, skipping patch."
+          }
+
+          # Step 3: Jalankan flutter_launcher_icons untuk sync icon dari pubspec
+          Write-Host "🔄 Running flutter_launcher_icons..."
           dart run flutter_launcher_icons
 
+          # Step 4: Re-copy icon lagi setelah flutter_launcher_icons (berjaga-jaga jika di-reset)
+          Copy-Item $iconSrc $iconDst -Force
+          Write-Host "✅ Custom icon re-applied after flutter_launcher_icons"
+
       - name: 🔨 Build Flutter Windows Release
+        run: flutter build windows --release
+
+      - name: 🔍 Verify Built .exe Icon
+        shell: pwsh
         run: |
-          flutter build windows --release
+          # Tampilkan info build untuk verifikasi
+          $exeFiles = Get-ChildItem -Path "build\windows" -Recurse -Filter "*.exe"
+          foreach ($exe in $exeFiles) {
+            Write-Host "Found EXE: $($exe.FullName) | Size: $($exe.Length) bytes"
+          }
+          # Verifikasi icon resource ada
+          if (Test-Path "windows\runner\resources\app_icon.ico") {
+            $ico = Get-Item "windows\runner\resources\app_icon.ico"
+            Write-Host "✅ Icon resource: $($ico.FullName) | Size: $($ico.Length) bytes"
+          }
 
       - name: 🗜️ Archive Windows Release Bundle
         shell: pwsh
@@ -64,7 +106,7 @@ jobs:
 
           if ($bundleDir) {
             Write-Host "Found TRUE Flutter Windows Release Bundle at: $($bundleDir.FullName)"
-            
+
             # Ensure the primary executable is named LufyaCBT.exe
             $exeFile = Get-ChildItem -Path $bundleDir.FullName -Filter "*.exe" | Select-Object -First 1
             if ($exeFile) {
