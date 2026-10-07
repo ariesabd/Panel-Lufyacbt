@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="60" height="60">
+  <polygon points="50,5 95,28 78,80 22,80 5,28" fill="#2563eb" stroke="#1d4ed8" stroke-width="2"/>
+  <circle cx="50" cy="46" r="28" fill="#ffffff" stroke="#f59e0b" stroke-width="2"/>
+  <path d="M50 22 L60 40 L40 40 Z" fill="#2563eb"/>
+  <path d="M50 40 L65 52 L35 52 Z" fill="#d97706"/>
+  <path d="M35 58 Q50 66 65 58 Q50 61 35 58 Z" fill="#0f172a"/>
+  <text x="50" y="72" font-size="6.5" font-family="sans-serif" font-weight="bold" fill="#ffffff" text-anchor="middle">TUT WURI HANDAYANI</text>
+</svg>
