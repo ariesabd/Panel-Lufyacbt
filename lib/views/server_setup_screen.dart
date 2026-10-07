@@ -89,21 +89,21 @@ class _ServerSetupScreenState extends State<ServerSetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 540),
+            constraints: const BoxConstraints(maxWidth: 500),
             padding: const EdgeInsets.all(36),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withOpacity(0.05),
                   blurRadius: 24,
-                  offset: const Offset(0, 10),
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
@@ -111,7 +111,7 @@ class _ServerSetupScreenState extends State<ServerSetupScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header
+                // Header with 1:1 Transparent Logo
                 Row(
                   children: [
                     Image.asset(
@@ -150,7 +150,7 @@ class _ServerSetupScreenState extends State<ServerSetupScreen> {
 
                 // URL Input Label
                 const Text(
-                  'URL / IP Server CBT :',
+                  'URL / Alamat IP Server CBT :',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -159,7 +159,7 @@ class _ServerSetupScreenState extends State<ServerSetupScreen> {
                 ),
                 const SizedBox(height: 8),
 
-                // TextField
+                // Clean TextField (Without example chips below)
                 TextField(
                   controller: _urlController,
                   enabled: !_isLoading,
@@ -172,19 +172,6 @@ class _ServerSetupScreenState extends State<ServerSetupScreen> {
                     ),
                   ),
                   onSubmitted: (_) => _doSync(),
-                ),
-                const SizedBox(height: 10),
-
-                // Quick Presets
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: [
-                    const Text('Contoh cepat: ', style: TextStyle(fontSize: 11, color: AppTheme.textLight)),
-                    _buildPresetChip('http://localhost/lufyacbt'),
-                    _buildPresetChip('http://192.168.1.100/lufyacbt'),
-                    _buildPresetChip('http://192.168.0.200/cbt'),
-                  ],
                 ),
                 const SizedBox(height: 20),
 
@@ -243,7 +230,7 @@ class _ServerSetupScreenState extends State<ServerSetupScreen> {
                         const Divider(height: 20, color: Color(0xFFDCFCE7)),
                         _buildInfoRow('Nama Aplikasi', _syncedInfo!.appName),
                         _buildInfoRow('Nama Lembaga', _syncedInfo!.schoolName),
-                        _buildInfoRow('Kode Tenant/Server', _syncedInfo!.tenantCode),
+                        _buildInfoRow('Kode Tenant', _syncedInfo!.tenantCode),
                         _buildInfoRow('Versi Server', _syncedInfo!.serverVersion),
                         _buildInfoRow('Alamat Valid', _syncedInfo!.baseUrl),
                       ],
@@ -302,28 +289,6 @@ class _ServerSetupScreenState extends State<ServerSetupScreen> {
     );
   }
 
-  Widget _buildPresetChip(String url) {
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _urlController.text = url;
-          _errorMessage = null;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        decoration: BoxDecoration(
-          color: const Color(0xFFE2E8F0),
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Text(
-          url,
-          style: const TextStyle(fontSize: 10, color: AppTheme.textMain),
-        ),
-      ),
-    );
-  }
-
   Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
@@ -331,7 +296,7 @@ class _ServerSetupScreenState extends State<ServerSetupScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 140,
+            width: 130,
             child: Text(
               '$label :',
               style: const TextStyle(fontSize: 11, color: Color(0xFF15803D)),

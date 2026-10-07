@@ -37,7 +37,7 @@ class ApiService {
     final cleanUrl = normalizeUrl(inputUrl);
     final headers = SecurityService.getSecurityHeaders();
 
-    // List of candidate endpoint paths to probe
+    // Candidate paths to probe
     final probePaths = [
       '/api/panel/sync.php',
       '/lufyacbt/api/panel/sync.php',
@@ -78,7 +78,6 @@ class ApiService {
       if (response.statusCode == 200 && (jsonBody['status'] == 'success' || jsonBody['handshake'] == true)) {
         final serverInfo = ServerInfo.fromJson(jsonBody);
         
-        // Save to storage
         final resolvedBaseUrl = successfulEndpoint ?? serverInfo.baseUrl;
         await StorageService.saveServerUrl(resolvedBaseUrl);
         await StorageService.saveServerInfo(serverInfo);
@@ -104,10 +103,11 @@ class ApiService {
     }
   }
 
-  /// Proctor Login Request
+  /// Single Sign-On (SSO) Proctor Login Request
   static Future<ApiResponse<Map<String, dynamic>>> login({
     required String username,
     required String password,
+    String? role,
     String? tenant,
   }) async {
     final serverInfo = await StorageService.getServerInfo();
@@ -120,21 +120,22 @@ class ApiService {
       );
     }
 
-    final loginEndpoint = (serverInfo != null && serverInfo.apiLoginUrl.isNotEmpty)
-        ? serverInfo.apiLoginUrl
-        : '$serverUrl/api/auth/login.php';
+    // Use SSO endpoint for seamless browser authentication
+    final ssoEndpoint = (serverInfo != null && serverInfo.ssoUrl.isNotEmpty)
+        ? serverInfo.ssoUrl
+        : '$serverUrl/api/panel/sso.php';
 
     try {
       final headers = SecurityService.getSecurityHeaders();
       final body = jsonEncode({
         'username': username.trim(),
         'password': password.trim(),
-        'role': 'proktor', // allow proktor, admin, operator
+        'role': role?.trim() ?? 'all',
         'tenant': tenant?.trim(),
       });
 
       final res = await http.post(
-        Uri.parse(loginEndpoint),
+        Uri.parse(ssoEndpoint),
         headers: headers,
         body: body,
       ).timeout(const Duration(seconds: 10));
@@ -142,8 +143,10 @@ class ApiService {
       final jsonBody = jsonDecode(res.body);
 
       if (res.statusCode == 200 && jsonBody['status'] == 'success') {
-        final userData = jsonBody['data']?['user'] ?? jsonBody['user'];
-        final redirectUrl = jsonBody['data']?['redirect'] ?? jsonBody['redirect'] ?? '$serverUrl/admin';
+        final data = jsonBody['data'] ?? jsonBody;
+        final userData = data['user'];
+        final redirectUrl = data['redirect'] ?? '$serverUrl/admin/dashboard.php';
+        final ssoBridgeUrl = data['sso_bridge_url'] ?? redirectUrl;
         
         await StorageService.saveLastUsername(username);
 
@@ -153,6 +156,7 @@ class ApiService {
           data: {
             'user': userData != null ? UserModel.fromJson(userData) : null,
             'redirect': redirectUrl,
+            'sso_bridge_url': ssoBridgeUrl,
           },
         );
       } else {

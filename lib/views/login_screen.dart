@@ -24,6 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final _tenantController = TextEditingController();
   
+  String _selectedRole = 'all';
   bool _obscurePassword = true;
   bool _isLoading = false;
   String? _errorMessage;
@@ -63,6 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final res = await ApiService.login(
       username: username,
       password: password,
+      role: _selectedRole,
       tenant: _tenantController.text.trim(),
     );
 
@@ -72,14 +74,18 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = false;
     });
 
-    if (res.success) {
-      final redirectUrl = res.data?['redirect'] as String? ?? widget.serverInfo.adminUrl;
+    if (res.success && res.data != null) {
+      // Direct Single Sign-On bridge URL to seamlessly initialize PHP session inside WebView2
+      final ssoBridgeUrl = res.data!['sso_bridge_url'] as String? 
+          ?? res.data!['redirect'] as String? 
+          ?? widget.serverInfo.adminUrl;
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) => DashboardScreen(
             serverInfo: widget.serverInfo,
-            targetUrl: redirectUrl,
+            targetUrl: ssoBridgeUrl,
             username: username,
           ),
         ),
@@ -93,58 +99,79 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktopWidth = MediaQuery.of(context).size.width >= 850;
+    final size = MediaQuery.of(context).size;
+    final isDesktopWidth = size.width >= 860;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8FAFC),
       body: Stack(
         children: [
-          // Background Decorative Shapes (Left Bottom - as in ANBK reference)
+          // Elegant ANBK Curved Blue Background (Smooth Bottom Left Corner)
           Positioned(
-            left: -80,
+            left: -60,
             bottom: -80,
             child: Container(
-              width: 320,
-              height: 320,
+              width: 380,
+              height: 380,
               decoration: BoxDecoration(
-                color: const Color(0xFF60A5FA).withOpacity(0.35),
-                borderRadius: BorderRadius.circular(60),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF0284C7), Color(0xFF2563EB)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(220),
+                  bottomRight: Radius.circular(80),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF0284C7).withOpacity(0.25),
+                    blurRadius: 40,
+                    offset: const Offset(10, -10),
+                  ),
+                ],
               ),
             ),
           ),
           Positioned(
-            left: -120,
-            bottom: -20,
+            left: -40,
+            bottom: -60,
             child: Container(
-              width: 300,
-              height: 300,
+              width: 280,
+              height: 280,
               decoration: BoxDecoration(
-                color: const Color(0xFF2563EB).withOpacity(0.85),
-                borderRadius: BorderRadius.circular(60),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF38BDF8), Color(0xFF0284C7)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(180),
+                ),
               ),
             ),
           ),
-          
-          // Background Network Grid / Nodes Effect
+
+          // Subtle Network Line Background Decor
           Positioned.fill(
             child: CustomPaint(
               painter: _NetworkGridPainter(),
             ),
           ),
 
-          // Main Responsive Content
+          // Main Responsive Layout
           SafeArea(
             child: Column(
               children: [
-                // Top Bar: Server Status & Change Server URL button
+                // Top Bar: Server Status Pill & Change Server URL button
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Status Connected
+                      // Connected Status Pill
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF0FDF4),
                           borderRadius: BorderRadius.circular(20),
@@ -174,7 +201,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
 
-                      // Settings / Change URL Button
+                      // Change URL Button
                       TextButton.icon(
                         onPressed: () {
                           Navigator.push(
@@ -196,21 +223,21 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                // Center Body (2 Column Layout on Desktop)
+                // Center Content Area
                 Expanded(
                   child: Center(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 12),
                       child: isDesktopWidth ? _buildDesktopLayout() : _buildMobileLayout(),
                     ),
                   ),
                 ),
 
-                // Bottom Footer
+                // Footer
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Text(
-                    'Panel LufyaCBT v${widget.serverInfo.serverVersion} • Desktop Proktor Edition',
+                    'Panel LufyaCBT v${widget.serverInfo.serverVersion} • Desktop Proktor & Pengawas',
                     style: const TextStyle(fontSize: 11, color: AppTheme.textLight),
                   ),
                 ),
@@ -227,21 +254,21 @@ class _LoginScreenState extends State<LoginScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Left Column: Branding (ANBK / CBT Title)
+        // Left Column: Branding
         Expanded(
           flex: 5,
           child: Padding(
-            padding: const EdgeInsets.only(right: 48, left: 24),
+            padding: const EdgeInsets.only(right: 48, left: 32),
             child: _buildBrandingSection(),
           ),
         ),
 
-        // Right Column: Sign In Floating Card
+        // Right Column: Sign-In Card
         Expanded(
           flex: 4,
           child: Center(
             child: Container(
-              constraints: const BoxConstraints(maxWidth: 420),
+              constraints: const BoxConstraints(maxWidth: 400),
               child: _buildSignInCard(),
             ),
           ),
@@ -256,7 +283,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _buildBrandingSection(),
         const SizedBox(height: 28),
         Container(
-          constraints: const BoxConstraints(maxWidth: 420),
+          constraints: const BoxConstraints(maxWidth: 400),
           child: _buildSignInCard(),
         ),
       ],
@@ -268,86 +295,70 @@ class _LoginScreenState extends State<LoginScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Logo & Tag
+        // 1:1 Transparent Logo & App Name Header
         Row(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Dynamic Logo if available, else standard icon
-            if (widget.serverInfo.logoUrl.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  widget.serverInfo.logoUrl,
-                  width: 44,
-                  height: 44,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => _buildDefaultLogoBadge(),
-                ),
-              )
-            else
-              _buildDefaultLogoBadge(),
+            Image.asset(
+              'assets/images/logo.png',
+              width: 52,
+              height: 52,
+              fit: BoxFit.contain,
+            ),
             const SizedBox(width: 14),
             Text(
-              widget.serverInfo.appName.isNotEmpty ? widget.serverInfo.appName : 'ANBK',
+              widget.serverInfo.appName.isNotEmpty ? widget.serverInfo.appName : 'LUFYA CBT',
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w900,
-                color: AppTheme.textMain,
-                letterSpacing: 0.5,
+                color: Color(0xFF0F172A),
+                letterSpacing: 0.8,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 20),
 
         // Title
         Text(
           widget.serverInfo.subTitle.isNotEmpty
               ? widget.serverInfo.subTitle
-              : 'Selamat Datang Di\nCBT Proktor',
+              : 'Selamat Datang Di CBT Proktor',
           style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: AppTheme.textMain,
+            color: Color(0xFF1E293B),
             height: 1.25,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
 
         // School/Institution Name
         Text(
           widget.serverInfo.schoolName,
           style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.primary,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF0284C7),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildDefaultLogoBadge() {
-    return Image.asset(
-      'assets/images/logo.png',
-      width: 48,
-      height: 48,
-      fit: BoxFit.contain,
-    );
-  }
-
   Widget _buildSignInCard() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 34),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 30,
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 28,
             spreadRadius: 2,
-            offset: const Offset(0, 10),
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -355,14 +366,14 @@ class _LoginScreenState extends State<LoginScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Header
+          // Card Header
           const Text(
             'Sign In',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: AppTheme.textMain,
+              color: Color(0xFF0F172A),
             ),
           ),
           const SizedBox(height: 6),
@@ -371,12 +382,12 @@ class _LoginScreenState extends State<LoginScreen> {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12,
-              color: AppTheme.textMuted,
+              color: Color(0xFF64748B),
             ),
           ),
           const SizedBox(height: 24),
 
-          // Error box
+          // Error Notification Box
           if (_errorMessage != null) ...[
             Container(
               padding: const EdgeInsets.all(10),
@@ -397,7 +408,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // ID Proktor Field
           const Text(
             'ID Proktor',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppTheme.textMuted),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF475569)),
           ),
           const SizedBox(height: 6),
           TextField(
@@ -413,7 +424,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // Password Field
           const Text(
             'Password',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppTheme.textMuted),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF475569)),
           ),
           const SizedBox(height: 6),
           TextField(
@@ -440,12 +451,40 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(height: 16),
 
+          // Hak Akses Dropdown (Admin / Pengawas / Guru)
+          const Text(
+            'Hak Akses Masuk',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF475569)),
+          ),
+          const SizedBox(height: 6),
+          DropdownButtonFormField<String>(
+            value: _selectedRole,
+            decoration: const InputDecoration(
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            ),
+            items: const [
+              DropdownMenuItem(value: 'all', child: Text('Otomatis (Sesuai Akun)', style: TextStyle(fontSize: 13))),
+              DropdownMenuItem(value: 'admin', child: Text('Administrator', style: TextStyle(fontSize: 13))),
+              DropdownMenuItem(value: 'pengawas', child: Text('Pengawas / Proktor', style: TextStyle(fontSize: 13))),
+              DropdownMenuItem(value: 'guru', child: Text('Guru / Pendidik', style: TextStyle(fontSize: 13))),
+            ],
+            onChanged: (val) {
+              if (val != null) {
+                setState(() {
+                  _selectedRole = val;
+                });
+              }
+            },
+          ),
+          const SizedBox(height: 16),
+
           // Tenant Field
           Row(
             children: [
               const Text(
                 'Tenant : ',
-                style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -454,7 +493,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.textMain,
+                    color: Color(0xFF0F172A),
                   ),
                 ),
               ),
@@ -466,12 +505,13 @@ class _LoginScreenState extends State<LoginScreen> {
           ElevatedButton(
             onPressed: _isLoading ? null : _handleLogin,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00A2FF),
+              backgroundColor: const Color(0xFF0284C7),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
+              elevation: 0,
             ),
             child: _isLoading
                 ? const SpinKitRing(color: Colors.white, size: 18, lineWidth: 2)
@@ -490,27 +530,25 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-/// Custom Background Network Lines Painter (Subtle dotted/mesh lines)
+/// Custom Background Dotted / Mesh Grid Painter
 class _NetworkGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFFE2E8F0).withOpacity(0.4)
+      ..color = const Color(0xFFCBD5E1).withOpacity(0.3)
       ..strokeWidth = 0.8
       ..style = PaintingStyle.stroke;
 
     final dotPaint = Paint()
-      ..color = const Color(0xFF93C5FD).withOpacity(0.5)
+      ..color = const Color(0xFF38BDF8).withOpacity(0.4)
       ..style = PaintingStyle.fill;
 
-    // Draw some subtle decorative connected dots at bottom right
     final points = [
-      Offset(size.width * 0.45, size.height * 0.75),
-      Offset(size.width * 0.55, size.height * 0.82),
-      Offset(size.width * 0.65, size.height * 0.70),
-      Offset(size.width * 0.75, size.height * 0.85),
-      Offset(size.width * 0.85, size.height * 0.76),
-      Offset(size.width * 0.95, size.height * 0.88),
+      Offset(size.width * 0.45, size.height * 0.78),
+      Offset(size.width * 0.56, size.height * 0.84),
+      Offset(size.width * 0.68, size.height * 0.74),
+      Offset(size.width * 0.80, size.height * 0.87),
+      Offset(size.width * 0.92, size.height * 0.79),
     ];
 
     for (int i = 0; i < points.length - 1; i++) {

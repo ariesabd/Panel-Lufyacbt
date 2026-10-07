@@ -13,6 +13,7 @@ class ServerInfo {
   final String adminUrl;
   final String loginUrl;
   final String apiLoginUrl;
+  final String ssoUrl;
 
   ServerInfo({
     required this.handshake,
@@ -29,10 +30,10 @@ class ServerInfo {
     required this.adminUrl,
     required this.loginUrl,
     required this.apiLoginUrl,
+    required this.ssoUrl,
   });
 
   factory ServerInfo.fromJson(Map<String, dynamic> json) {
-    // Some APIs wrap extra info under "data" or top level
     final data = (json['data'] is Map<String, dynamic>) ? json['data'] : json;
     
     return ServerInfo(
@@ -50,6 +51,7 @@ class ServerInfo {
       adminUrl: data['admin_url'] ?? '',
       loginUrl: data['login_url'] ?? '',
       apiLoginUrl: data['api_login_url'] ?? '',
+      ssoUrl: data['sso_url'] ?? '',
     );
   }
 
@@ -69,6 +71,7 @@ class ServerInfo {
       'admin_url': adminUrl,
       'login_url': loginUrl,
       'api_login_url': apiLoginUrl,
+      'sso_url': ssoUrl,
     };
   }
 }
