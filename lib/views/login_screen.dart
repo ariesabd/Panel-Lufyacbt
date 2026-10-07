@@ -75,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     if (res.success && res.data != null) {
-      // Direct Single Sign-On bridge URL to seamlessly initialize PHP session inside WebView2
+      // Seamless Single Sign-On URL into WebView2 without 2x login
       final ssoBridgeUrl = res.data!['sso_bridge_url'] as String? 
           ?? res.data!['redirect'] as String? 
           ?? widget.serverInfo.adminUrl;
@@ -100,82 +100,59 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final isDesktopWidth = size.width >= 860;
+    final isDesktopWidth = size.width >= 880;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF1F5F9),
       body: Stack(
+        fit: StackFit.expand,
         children: [
-          // Elegant ANBK Curved Blue Background (Smooth Bottom Left Corner)
-          Positioned(
-            left: -60,
-            bottom: -80,
-            child: Container(
-              width: 380,
-              height: 380,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF0284C7), Color(0xFF2563EB)],
+          // 1. High-Res 3D Fluid Wave Wallpaper Background (Inspired by Reference Image 2)
+          Image.asset(
+            'assets/images/bg_login.jpg',
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            errorBuilder: (_, __, ___) => Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFE0F2FE), Color(0xFFF8FAFC)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                ),
-                borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(220),
-                  bottomRight: Radius.circular(80),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF0284C7).withOpacity(0.25),
-                    blurRadius: 40,
-                    offset: const Offset(10, -10),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            left: -40,
-            bottom: -60,
-            child: Container(
-              width: 280,
-              height: 280,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF38BDF8), Color(0xFF0284C7)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(180),
                 ),
               ),
             ),
           ),
 
-          // Subtle Network Line Background Decor
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _NetworkGridPainter(),
-            ),
+          // 2. Soft Luminous Glass Overlay Tint
+          Container(
+            color: Colors.white.withOpacity(0.35),
           ),
 
-          // Main Responsive Layout
+          // 3. Main Responsive Content
           SafeArea(
             child: Column(
               children: [
-                // Top Bar: Server Status Pill & Change Server URL button
+                // Top Action Bar
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Connected Status Pill
+                      // Connected Server Pill (Glassmorphic)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF0FDF4),
+                          color: Colors.white.withOpacity(0.9),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: const Color(0xFFBBF7D0)),
+                          border: Border.all(color: Colors.white),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -201,29 +178,36 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
 
-                      // Change URL Button
-                      TextButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ServerSetupScreen(
-                                initialUrl: widget.serverInfo.baseUrl,
+                      // Change URL Button (Glassmorphic)
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.85),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.white),
+                        ),
+                        child: TextButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ServerSetupScreen(
+                                  initialUrl: widget.serverInfo.baseUrl,
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.settings_outlined, size: 16, color: AppTheme.textMuted),
-                        label: const Text(
-                          'Ganti URL Server',
-                          style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                            );
+                          },
+                          icon: const Icon(Icons.settings_outlined, size: 15, color: Color(0xFF475569)),
+                          label: const Text(
+                            'Ganti URL Server',
+                            style: TextStyle(fontSize: 12, color: Color(0xFF475569), fontWeight: FontWeight.w500),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                // Center Content Area
+                // Center Main Content Area
                 Expanded(
                   child: Center(
                     child: SingleChildScrollView(
@@ -233,12 +217,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                // Footer
+                // Bottom Footer
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Text(
                     'Panel LufyaCBT v${widget.serverInfo.serverVersion} • Desktop Proktor & Pengawas',
-                    style: const TextStyle(fontSize: 11, color: AppTheme.textLight),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF334155).withOpacity(0.8),
+                    ),
                   ),
                 ),
               ],
@@ -254,7 +242,7 @@ class _LoginScreenState extends State<LoginScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Left Column: Branding
+        // Left Column: Branding Section
         Expanded(
           flex: 5,
           child: Padding(
@@ -263,7 +251,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
 
-        // Right Column: Sign-In Card
+        // Right Column: Floating Sign-In Card
         Expanded(
           flex: 4,
           child: Center(
@@ -291,59 +279,74 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildBrandingSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // 1:1 Transparent Logo & App Name Header
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/images/logo.png',
-              width: 52,
-              height: 52,
-              fit: BoxFit.contain,
-            ),
-            const SizedBox(width: 14),
-            Text(
-              widget.serverInfo.appName.isNotEmpty ? widget.serverInfo.appName : 'LUFYA CBT',
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFF0F172A),
-                letterSpacing: 0.8,
+    return Container(
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.85),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.9)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0284C7).withOpacity(0.06),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 1:1 Transparent Logo & App Name Header
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/images/logo.png',
+                width: 52,
+                height: 52,
+                fit: BoxFit.contain,
               ),
+              const SizedBox(width: 14),
+              Text(
+                widget.serverInfo.appName.isNotEmpty ? widget.serverInfo.appName : 'LUFYA CBT',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Title
+          Text(
+            widget.serverInfo.subTitle.isNotEmpty
+                ? widget.serverInfo.subTitle
+                : 'Selamat Datang Di CBT Proktor',
+            style: const TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1E293B),
+              height: 1.25,
             ),
-          ],
-        ),
-        const SizedBox(height: 20),
-
-        // Title
-        Text(
-          widget.serverInfo.subTitle.isNotEmpty
-              ? widget.serverInfo.subTitle
-              : 'Selamat Datang Di CBT Proktor',
-          style: const TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1E293B),
-            height: 1.25,
           ),
-        ),
-        const SizedBox(height: 10),
+          const SizedBox(height: 10),
 
-        // School/Institution Name
-        Text(
-          widget.serverInfo.schoolName,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF0284C7),
+          // School/Institution Name
+          Text(
+            widget.serverInfo.schoolName,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF0284C7),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -351,14 +354,15 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 34),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white.withOpacity(0.96),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 28,
+            color: Colors.black.withOpacity(0.07),
+            blurRadius: 32,
             spreadRadius: 2,
-            offset: const Offset(0, 8),
+            offset: const Offset(0, 12),
           ),
         ],
       ),
@@ -528,38 +532,4 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-}
-
-/// Custom Background Dotted / Mesh Grid Painter
-class _NetworkGridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFCBD5E1).withOpacity(0.3)
-      ..strokeWidth = 0.8
-      ..style = PaintingStyle.stroke;
-
-    final dotPaint = Paint()
-      ..color = const Color(0xFF38BDF8).withOpacity(0.4)
-      ..style = PaintingStyle.fill;
-
-    final points = [
-      Offset(size.width * 0.45, size.height * 0.78),
-      Offset(size.width * 0.56, size.height * 0.84),
-      Offset(size.width * 0.68, size.height * 0.74),
-      Offset(size.width * 0.80, size.height * 0.87),
-      Offset(size.width * 0.92, size.height * 0.79),
-    ];
-
-    for (int i = 0; i < points.length - 1; i++) {
-      canvas.drawLine(points[i], points[i + 1], paint);
-    }
-
-    for (final p in points) {
-      canvas.drawCircle(p, 3.5, dotPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
