@@ -33,67 +33,36 @@ jobs:
           flutter create --platforms=windows --project-name=lufyacbt .
           flutter doctor -v
 
-      - name: 📦 Install Dependencies
-        run: flutter pub get
-
-      - name: 🎨 Apply Custom App Icon (Override Flutter Default)
+      - name: 📦 Install Dependencies & Generate Icons
         shell: pwsh
         run: |
-          # Step 1: Copy custom .ico ke windows/runner/resources (SETELAH flutter create)
-          $iconSrc = "assets\icons\app_icon.ico"
-          $iconDst = "windows\runner\resources\app_icon.ico"
-
-          if (Test-Path $iconSrc) {
-            New-Item -ItemType Directory -Path "windows\runner\resources" -Force | Out-Null
-            Copy-Item $iconSrc $iconDst -Force
-            Write-Host "✅ Custom icon copied to $iconDst"
-          } else {
-            Write-Error "❌ $iconSrc not found! Build will use Flutter default icon."
-            exit 1
-          }
-
-          # Step 2: Patch Runner.rc agar menunjuk ke app_icon.ico kustom
-          $rcFile = "windows\runner\Runner.rc"
-          if (Test-Path $rcFile) {
-            $rcContent = Get-Content $rcFile -Raw
-            # Ganti icon reference Flutter default dengan icon kustom kita
-            $rcPatched = $rcContent -replace 'IDI_APP_ICON\s+ICON\s+"[^"]*"', 'IDI_APP_ICON             ICON             "resources\app_icon.ico"'
-            if ($rcPatched -ne $rcContent) {
-              Set-Content $rcFile $rcPatched -Encoding UTF8
-              Write-Host "✅ Runner.rc patched: IDI_APP_ICON => resources\app_icon.ico"
-            } else {
-              Write-Warning "Runner.rc already has correct icon path or pattern not found."
-              Write-Host "--- Runner.rc content ---"
-              Get-Content $rcFile
-            }
-          } else {
-            Write-Warning "Runner.rc not found, skipping patch."
-          }
-
-          # Step 3: Jalankan flutter_launcher_icons untuk sync icon dari pubspec
-          Write-Host "🔄 Running flutter_launcher_icons..."
+          flutter pub get
+          # flutter_launcher_icons akan generate app_icon.ico dari app_icon.png
+          # dan menempatkannya di windows\runner\resources\app_icon.ico secara otomatis
           dart run flutter_launcher_icons
+          Write-Host "✅ flutter_launcher_icons selesai"
 
-          # Step 4: Re-copy icon lagi setelah flutter_launcher_icons (berjaga-jaga jika di-reset)
-          Copy-Item $iconSrc $iconDst -Force
-          Write-Host "✅ Custom icon re-applied after flutter_launcher_icons"
+          # Verifikasi icon berhasil di-generate
+          if (Test-Path "windows\runner\resources\app_icon.ico") {
+            $ico = Get-Item "windows\runner\resources\app_icon.ico"
+            Write-Host "✅ Icon OK: $($ico.FullName) | Size: $($ico.Length) bytes"
+          } else {
+            Write-Warning "⚠️ app_icon.ico belum ada, fallback copy dari assets..."
+            New-Item -ItemType Directory -Path "windows\runner\resources" -Force | Out-Null
+            if (Test-Path "assets\icons\app_icon.ico") {
+              Copy-Item "assets\icons\app_icon.ico" "windows\runner\resources\app_icon.ico" -Force
+              Write-Host "✅ Fallback: Custom icon copied from assets\icons\app_icon.ico"
+            }
+          }
+
+          # Tampilkan Runner.rc untuk verifikasi path icon
+          if (Test-Path "windows\runner\Runner.rc") {
+            Write-Host "--- Runner.rc icon lines ---"
+            Get-Content "windows\runner\Runner.rc" | Select-String "ICO|ICON"
+          }
 
       - name: 🔨 Build Flutter Windows Release
         run: flutter build windows --release
-
-      - name: 🔍 Verify Built .exe Icon
-        shell: pwsh
-        run: |
-          # Tampilkan info build untuk verifikasi
-          $exeFiles = Get-ChildItem -Path "build\windows" -Recurse -Filter "*.exe"
-          foreach ($exe in $exeFiles) {
-            Write-Host "Found EXE: $($exe.FullName) | Size: $($exe.Length) bytes"
-          }
-          # Verifikasi icon resource ada
-          if (Test-Path "windows\runner\resources\app_icon.ico") {
-            $ico = Get-Item "windows\runner\resources\app_icon.ico"
-            Write-Host "✅ Icon resource: $($ico.FullName) | Size: $($ico.Length) bytes"
-          }
 
       - name: 🗜️ Archive Windows Release Bundle
         shell: pwsh
