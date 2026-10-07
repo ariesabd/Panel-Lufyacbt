@@ -44,12 +44,17 @@ jobs:
       - name: 🗜️ Archive Windows Release Bundle
         shell: pwsh
         run: |
-          $releaseDir = Get-ChildItem -Path "build\windows" -Recurse -Directory -Filter "Release" | Select-Object -First 1
-          if ($releaseDir) {
-            Write-Host "Found Release directory at $($releaseDir.FullName)"
-            Compress-Archive -Path "$($releaseDir.FullName)\*" -DestinationPath "Panel-LufyaCBT-Windows-x64.zip" -Force
+          # Locate the runner directory that contains the compiled .exe file
+          $exeFile = Get-ChildItem -Path "build\windows" -Recurse -Filter "*.exe" | Select-Object -First 1
+          if ($exeFile) {
+            $runnerDir = $exeFile.Directory.FullName
+            Write-Host "Found compiled executable at: $($exeFile.FullName)"
+            Write-Host "Target bundle directory: $runnerDir"
+            Get-ChildItem -Path $runnerDir
+            Compress-Archive -Path "$runnerDir\*" -DestinationPath "Panel-LufyaCBT-Windows-x64.zip" -Force
+            Write-Host "Successfully packaged Panel-LufyaCBT-Windows-x64.zip"
           } else {
-            Write-Error "Release build folder not found!"
+            Write-Error "No .exe file found in build\windows directory!"
             exit 1
           }
 
