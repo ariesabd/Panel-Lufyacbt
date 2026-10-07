@@ -455,34 +455,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Hak Akses Dropdown (Admin / Pengawas / Guru)
-          const Text(
-            'Hak Akses Masuk',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF475569)),
-          ),
-          const SizedBox(height: 6),
-          DropdownButtonFormField<String>(
-            value: _selectedRole,
-            decoration: const InputDecoration(
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            ),
-            items: const [
-              DropdownMenuItem(value: 'all', child: Text('Otomatis (Sesuai Akun)', style: TextStyle(fontSize: 13))),
-              DropdownMenuItem(value: 'admin', child: Text('Administrator', style: TextStyle(fontSize: 13))),
-              DropdownMenuItem(value: 'pengawas', child: Text('Pengawas / Proktor', style: TextStyle(fontSize: 13))),
-              DropdownMenuItem(value: 'guru', child: Text('Guru / Pendidik', style: TextStyle(fontSize: 13))),
-            ],
-            onChanged: (val) {
-              if (val != null) {
-                setState(() {
-                  _selectedRole = val;
-                });
-              }
-            },
-          ),
-          const SizedBox(height: 16),
-
           // Tenant Field
           Row(
             children: [
