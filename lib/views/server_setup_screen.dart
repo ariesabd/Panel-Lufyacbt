@@ -114,17 +114,11 @@ class _ServerSetupScreenState extends State<ServerSetupScreen> {
                 // Header
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryLight,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.dns_rounded,
-                        color: AppTheme.primary,
-                        size: 28,
-                      ),
+                    Image.asset(
+                      'assets/images/logo.png',
+                      width: 48,
+                      height: 48,
+                      fit: BoxFit.contain,
                     ),
                     const SizedBox(width: 16),
                     const Expanded(

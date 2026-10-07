@@ -328,27 +328,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildDefaultLogoBadge() {
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: const Color(0xFF0284C7),
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0284C7).withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: const Center(
-        child: Icon(
-          Icons.school_rounded,
-          color: Colors.white,
-          size: 24,
-        ),
-      ),
+    return Image.asset(
+      'assets/images/logo.png',
+      width: 48,
+      height: 48,
+      fit: BoxFit.contain,
     );
   }
 

@@ -72,29 +72,16 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 90,
-              height: 90,
-              decoration: BoxDecoration(
-                color: AppTheme.primaryLight,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primary.withOpacity(0.2),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.desktop_windows_rounded,
-                  size: 48,
-                  color: AppTheme.primary,
-                ),
+            // 1:1 Perfectly Centered Transparent Logo
+            SizedBox(
+              width: 110,
+              height: 110,
+              child: Image.asset(
+                'assets/images/logo.png',
+                fit: BoxFit.contain,
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 24),
             const Text(
               'LUFYA CBT PROKTOR',
               style: TextStyle(
