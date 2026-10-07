@@ -33,32 +33,57 @@ jobs:
           flutter create --platforms=windows --project-name=lufyacbt .
           flutter doctor -v
 
-      - name: 📦 Install Dependencies & Generate Icons
+      - name: 📦 Install Dependencies
+        run: flutter pub get
+
+      - name: 🎨 Embed Custom App Icon Into Windows Runner
         shell: pwsh
         run: |
-          flutter pub get
-          # flutter_launcher_icons akan generate app_icon.ico dari app_icon.png
-          # dan menempatkannya di windows\runner\resources\app_icon.ico secara otomatis
-          dart run flutter_launcher_icons
-          Write-Host "✅ flutter_launcher_icons selesai"
+          $iconSrc = "assets\icons\app_icon.ico"
+          $iconDst = "windows\runner\resources\app_icon.ico"
 
-          # Verifikasi icon berhasil di-generate
-          if (Test-Path "windows\runner\resources\app_icon.ico") {
-            $ico = Get-Item "windows\runner\resources\app_icon.ico"
-            Write-Host "✅ Icon OK: $($ico.FullName) | Size: $($ico.Length) bytes"
-          } else {
-            Write-Warning "⚠️ app_icon.ico belum ada, fallback copy dari assets..."
-            New-Item -ItemType Directory -Path "windows\runner\resources" -Force | Out-Null
-            if (Test-Path "assets\icons\app_icon.ico") {
-              Copy-Item "assets\icons\app_icon.ico" "windows\runner\resources\app_icon.ico" -Force
-              Write-Host "✅ Fallback: Custom icon copied from assets\icons\app_icon.ico"
-            }
+          # Pastikan source icon ada
+          if (-not (Test-Path $iconSrc)) {
+            Write-Error "❌ Source icon tidak ditemukan: $iconSrc"
+            exit 1
           }
 
-          # Tampilkan Runner.rc untuk verifikasi path icon
-          if (Test-Path "windows\runner\Runner.rc") {
-            Write-Host "--- Runner.rc icon lines ---"
-            Get-Content "windows\runner\Runner.rc" | Select-String "ICO|ICON"
+          # Buat folder resources jika belum ada
+          New-Item -ItemType Directory -Path "windows\runner\resources" -Force | Out-Null
+
+          # STEP 1: Hard copy icon kustom ke resources (override Flutter default)
+          Copy-Item $iconSrc $iconDst -Force
+          $icoInfo = Get-Item $iconDst
+          Write-Host "✅ [STEP 1] Icon kustom disalin: $($icoInfo.Length) bytes"
+
+          # STEP 2: Verifikasi Runner.rc menunjuk ke path yang benar
+          $rcFile = "windows\runner\Runner.rc"
+          if (Test-Path $rcFile) {
+            Write-Host "--- Runner.rc (icon section) ---"
+            Get-Content $rcFile | Select-String "ICO|ICON|app_icon"
+          }
+
+          # STEP 3: Run flutter_launcher_icons (generate dari pubspec)
+          Write-Host "🔄 Running flutter_launcher_icons..."
+          dart run flutter_launcher_icons
+          Write-Host "✅ [STEP 3] flutter_launcher_icons done"
+
+          # STEP 4: PAKSA copy ulang icon kustom kita
+          # (flutter_launcher_icons mungkin overwrite dengan hasil generate-nya sendiri)
+          Copy-Item $iconSrc $iconDst -Force
+          $icoFinal = Get-Item $iconDst
+          Write-Host "✅ [STEP 4] Icon kustom di-force copy ulang: $($icoFinal.Length) bytes"
+
+          # STEP 5: Tampilkan hash MD5 sebagai bukti icon kita yang digunakan
+          $hash = (Get-FileHash $iconDst -Algorithm MD5).Hash
+          $srcHash = (Get-FileHash $iconSrc -Algorithm MD5).Hash
+          Write-Host "🔑 MD5 source   : $srcHash"
+          Write-Host "🔑 MD5 resources: $hash"
+          if ($hash -eq $srcHash) {
+            Write-Host "✅ CONFIRMED: Icon di resources = icon kustom kita!"
+          } else {
+            Write-Error "❌ Hash tidak cocok! Icon resources berbeda dengan source."
+            exit 1
           }
 
       - name: 🔨 Build Flutter Windows Release
