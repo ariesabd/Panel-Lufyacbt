@@ -1,0 +1,69 @@
+name: Build Panel LufyaCBT Windows (.exe)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.x'
+          channel: 'stable'
+          cache: true
+
+      - name: 🔍 Enable Windows Desktop Support
+        run: |
+          flutter config --enable-windows-desktop
+          flutter doctor -v
+
+      - name: 📦 Install Dependencies
+        run: |
+          flutter pub get
+
+      - name: 🔨 Build Flutter Windows Release
+        run: |
+          flutter build windows --release
+
+      - name: 🗜️ Archive Windows Release Bundle
+        shell: pwsh
+        run: |
+          $releaseDir = Get-ChildItem -Path "build\windows" -Recurse -Directory -Filter "Release" | Select-Object -First 1
+          if ($releaseDir) {
+            Write-Host "Found Release directory at $($releaseDir.FullName)"
+            Compress-Archive -Path "$($releaseDir.FullName)\*" -DestinationPath "Panel-LufyaCBT-Windows-x64.zip" -Force
+          } else {
+            Write-Error "Release build folder not found!"
+            exit 1
+          }
+
+      - name: 📤 Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Panel-LufyaCBT-Windows-x64
+          path: Panel-LufyaCBT-Windows-x64.zip
+          retention-days: 30
+
+      - name: 🚀 Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Panel-LufyaCBT-Windows-x64.zip
+          name: "Release ${{ github.ref_name }}"
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
