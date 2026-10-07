@@ -31,6 +31,7 @@ jobs:
       - name: 🔍 Enable Windows Desktop Support
         run: |
           flutter config --enable-windows-desktop
+          flutter create --platforms=windows .
           flutter doctor -v
 
       - name: 📦 Install Dependencies
