@@ -18,20 +18,19 @@ jobs:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 🛠️ Setup Visual Studio Environment
+      - name: 🛠️ Setup Visual Studio MSVC Environment
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: ⚙️ Setup Flutter SDK
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.x'
           channel: 'stable'
           cache: true
 
-      - name: 🔍 Enable Windows Desktop Support
+      - name: 🔍 Generate Official Windows Platform Runner
         run: |
           flutter config --enable-windows-desktop
-          flutter create --platforms=windows .
+          flutter create --platforms=windows --project-name=panel_lufyacbt .
           flutter doctor -v
 
       - name: 📦 Install Dependencies
